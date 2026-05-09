@@ -25,7 +25,7 @@ if command -v bun >/dev/null 2>&1; then
   bun run typecheck
   echo "==> build"
   bun run build
-  if [ ! -f dist/index.js ] || [ ! -f dist/index.cjs ]; then
+  if [ ! -f dist/index.js ] || [ ! -f dist/index.mjs ]; then
     echo "ERROR: dual ESM/CJS build missing"
     exit 1
   fi
