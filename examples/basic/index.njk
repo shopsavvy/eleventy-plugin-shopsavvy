@@ -1,0 +1,24 @@
+---
+title: Eleventy + ShopSavvy demo
+---
+
+<h1>Eleventy + ShopSavvy</h1>
+
+<h2>Product card</h2>
+{% shopsavvyProduct "012345678905" %}
+
+<h2>Inline price</h2>
+<p>The current best price is {{ "012345678905" | shopsavvyPrice }}.</p>
+
+<h2>Offer table</h2>
+{% shopsavvyProduct "012345678905", "table" %}
+
+<h2>Trending deals (global data)</h2>
+<ul>
+  {% for deal in shopsavvyDeals | slice(0, 5) %}
+    <li>{{ deal.name }} — ${{ deal.price }} at {{ deal.retailer }}</li>
+  {% endfor %}
+</ul>
+
+<h2>Price history</h2>
+{% shopsavvyPriceHistory "012345678905", 180 %}

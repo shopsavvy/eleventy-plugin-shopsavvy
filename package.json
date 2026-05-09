@@ -1,0 +1,49 @@
+{
+  "name": "eleventy-plugin-shopsavvy",
+  "version": "0.1.0",
+  "description": "Eleventy plugin with shortcodes and global data for product cards, deal feeds, and price history powered by ShopSavvy",
+  "keywords": [
+    "eleventy",
+    "11ty",
+    "eleventy-plugin",
+    "shopsavvy",
+    "products",
+    "pricing",
+    "shopping",
+    "ecommerce"
+  ],
+  "homepage": "https://shopsavvy.com/integrations/eleventy",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shopsavvy/eleventy-plugin-shopsavvy"
+  },
+  "license": "MIT",
+  "author": "ShopSavvy by Monolith Technologies, Inc.",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts",
+    "typecheck": "tsc --noEmit",
+    "test": "echo 'no tests yet' && exit 0"
+  },
+  "peerDependencies": {
+    "@11ty/eleventy": ">=2.0.0"
+  },
+  "devDependencies": {
+    "@11ty/eleventy": "^3.0.0",
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0"
+  }
+}
