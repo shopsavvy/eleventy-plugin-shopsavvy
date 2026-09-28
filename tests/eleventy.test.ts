@@ -39,16 +39,25 @@ beforeAll(() => {
         if (!params.start || !params.end) return Response.json({ success: false, error: "start/end required" }, { status: 400 })
         return Response.json({
           success: true,
-          data: [
-            { id: "o1", retailer: "Amazon", currency: "USD", history: [
-              { timestamp: "2026-01-01T10:00:00Z", price: 349.99, currency: "USD" },
-              { timestamp: "2026-01-02T10:00:00Z", price: 299.99, currency: "USD" },
-            ] },
-            { id: "o2", retailer: "Best Buy", currency: "USD", history: [
-              { timestamp: "2026-01-02T12:00:00Z", price: 289.99, currency: "USD" },
-              { timestamp: "2026-01-03T12:00:00Z", price: 279.99, currency: "USD" },
-            ] },
-          ],
+          // The real shape: one entry PER PRODUCT, each offer carrying its own history,
+          // newest first. `currency` is null on an archived point with none recorded
+          // (the offer's currency applies), and eBay listings carry no history.
+          data: [{
+            title: "Sony WH-1000XM5",
+            shopsavvy: "abc123",
+            category: null,
+            offers: [
+              { id: "o1", retailer: "Amazon", currency: "USD", price: 299.99, seller: null, history: [
+                { timestamp: "2026-01-02T10:00:00Z", price: 299.99, currency: "USD", availability: "in" },
+                { timestamp: "2026-01-01T10:00:00Z", price: 349.99, currency: null },
+              ] },
+              { id: "o2", retailer: "Best Buy", currency: "USD", price: 279.99, seller: null, history: [
+                { timestamp: "2026-01-03T12:00:00Z", price: 279.99, currency: "USD", availability: "in" },
+                { timestamp: "2026-01-02T12:00:00Z", price: 289.99, currency: "USD", availability: "out" },
+              ] },
+              { id: "o3", retailer: "eBay", currency: "USD", price: 210, seller: "audio_reseller", condition: "used", history: [] },
+            ],
+          }],
         })
       }
       if (url.pathname === "/v1/deals") {

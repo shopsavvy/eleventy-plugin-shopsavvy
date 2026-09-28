@@ -21,17 +21,19 @@ export type DealSort = (typeof DEAL_SORTS)[number]
 
 // ---- Data API response shapes (https://shopsavvy.com/data/documentation) ----
 
+// The API passes offer fields straight through from the offer record, so an unknown
+// value arrives as an explicit JSON `null` (e.g. `seller` on every first-party offer).
 export interface ShopsavvyOffer {
   id?: string
-  retailer?: string
-  price?: number
-  currency?: string
+  retailer?: string | null
+  price?: number | null
+  currency?: string | null
   /** "in" | "out"; absent when unknown. */
   availability?: string
-  condition?: string
-  URL?: string
-  seller?: string
-  timestamp?: string
+  condition?: string | null
+  URL?: string | null
+  seller?: string | null
+  timestamp?: string | null
 }
 
 export interface ShopsavvyProduct {
@@ -65,11 +67,18 @@ interface DealsResponse {
 interface HistoryPoint {
   timestamp: string
   price: number
+  /** Null on an archived point with no recorded currency. */
   currency?: string | null
+  /** "in" | "out"; absent when unknown. */
+  availability?: string
 }
 
+/**
+ * GET /products/offers/history: one entry PER PRODUCT (the same shape as
+ * /products/offers), each offer carrying its own `history`, newest first.
+ */
 interface HistoryResponse {
-  data?: Array<ShopsavvyOffer & { history?: HistoryPoint[] }>
+  data?: Array<Omit<ShopsavvyProduct, "offers"> & { offers?: Array<ShopsavvyOffer & { history?: HistoryPoint[] }> }>
 }
 
 type ShopsavvyGet = <T>(path: string, params?: Record<string, string | number | undefined>) => Promise<T>
@@ -115,7 +124,7 @@ function escapeHtml(s: unknown): string {
 }
 
 /** Format a price in its own currency. With no currency, show the bare number rather than guess one. */
-function formatPrice(amount: number | undefined, currency?: string | null): string {
+function formatPrice(amount: number | null | undefined, currency?: string | null): string {
   if (amount === undefined || amount === null || !Number.isFinite(amount)) return ""
   if (!currency) return amount.toFixed(2)
   try {
@@ -192,11 +201,12 @@ function renderDeals(deals: ShopsavvyDeal[]): string {
 
 /**
  * Lowest observed price per calendar day across every retailer's history, oldest
- * first. The Data API returns one history array per offer (retailer).
+ * first. The Data API returns one entry per product, each offer (retailer) carrying
+ * its own history array.
  */
-function dailyLowestPrices(offers: NonNullable<HistoryResponse["data"]>): Array<{ day: string; price: number; currency?: string | null }> {
+function dailyLowestPrices(products: NonNullable<HistoryResponse["data"]>): Array<{ day: string; price: number; currency?: string | null }> {
   const byDay = new Map<string, { price: number; currency?: string | null }>()
-  for (const offer of offers) {
+  for (const offer of products.flatMap((product) => product.offers ?? [])) {
     for (const point of offer.history ?? []) {
       if (typeof point.price !== "number" || point.price <= 0 || !point.timestamp) continue
       const day = point.timestamp.slice(0, 10)
