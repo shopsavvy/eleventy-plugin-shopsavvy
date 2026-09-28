@@ -13,10 +13,10 @@ title: Eleventy + ShopSavvy demo
 <h2>Offer table</h2>
 {% shopsavvyProduct "012345678905", "table" %}
 
-<h2>Trending deals (global data)</h2>
+<h2>Hot deals (global data)</h2>
 <ul>
-  {% for deal in shopsavvyDeals | slice(0, 5) %}
-    <li>{{ deal.name }} — ${{ deal.price }} at {{ deal.retailer }}</li>
+  {% for deal in shopsavvyDeals.slice(0, 5) %}
+    <li>{{ deal.title }} — ${{ deal.pricing.current }} at {{ deal.retailer.name }}</li>
   {% endfor %}
 </ul>
 

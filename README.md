@@ -10,21 +10,32 @@
 npm install eleventy-plugin-shopsavvy
 ```
 
-Ships as dual ESM + CJS so it works with both 11ty 2.x (CJS) and 3.x (ESM).
+Ships as dual ESM + CJS so it works with both 11ty 2.x (CJS) and 3.x (ESM). Requires Node 18+ (global `fetch`).
 
 ## Configure
 
 ```js
-// .eleventy.js (CJS) or eleventy.config.mjs (ESM)
-const shopsavvy = require("eleventy-plugin-shopsavvy")
+// eleventy.config.mjs (ESM, Eleventy 3)
+import shopsavvy from "eleventy-plugin-shopsavvy"
 
-module.exports = function (eleventyConfig) {
-  eleventyConfig.addPlugin(shopsavvy.default || shopsavvy, {
-    apiKey: process.env.SHOPSAVVY_API_KEY,
-    cacheTTL: 60_000, // optional
+export default function (eleventyConfig) {
+  eleventyConfig.addPlugin(shopsavvy, {
+    apiKey: process.env.SHOPSAVVY_API_KEY, // optional: SHOPSAVVY_API_KEY is read by default
+    cacheTTL: 60_000, // optional: reuse identical API responses for this long during a build
   })
 }
 ```
+
+```js
+// .eleventy.js (CommonJS, Eleventy 2 or 3)
+const shopsavvy = require("eleventy-plugin-shopsavvy")
+
+module.exports = function (eleventyConfig) {
+  eleventyConfig.addPlugin(shopsavvy)
+}
+```
+
+If a lookup fails (unknown product, missing key, API error), the build keeps going: the error is logged to the build output and left as an HTML comment where the embed would have been.
 
 ## Shortcodes
 
@@ -33,18 +44,18 @@ module.exports = function (eleventyConfig) {
 ```liquid
 {% shopsavvyProduct "012345678905" %}
 {% shopsavvyProduct "B0DGHYDZSB", "inline" %}
-{% shopsavvyProduct "012345678905", "table", "amazon", 10 %}
+{% shopsavvyProduct "012345678905", "table", "amazon.com", 10 %}
 ```
 
-Args: `identifier, layout="card"|"inline"|"table", retailer?, limit=5`.
+Args: `identifier, layout="card"|"inline"|"table", retailer?, limit=5`. `identifier` is a barcode/UPC/EAN/ISBN, ASIN, product URL, or model number; `retailer` is a domain (e.g. `amazon.com`). Offers are listed cheapest first.
 
 ### `{% shopsavvyDeals %}`
 
 ```liquid
-{% shopsavvyDeals "electronics", 8, "trending", "A" %}
+{% shopsavvyDeals "electronics", 8, "hot", "A" %}
 ```
 
-Args: `category?, limit=10, sort="trending"|"price"|"discount", grade?`.
+Args: `category?, limit=10, sort="hot"|"new"|"top-hour"|"top-day"|"top-week", grade?`.
 
 ### `{% shopsavvyPriceHistory %}`
 
@@ -52,7 +63,7 @@ Args: `category?, limit=10, sort="trending"|"price"|"discount", grade?`.
 {% shopsavvyPriceHistory "012345678905", 180 %}
 ```
 
-Args: `identifier, days=90, width=240, height=60`. Renders an inline SVG sparkline.
+Args: `identifier, days=90, width=240, height=60`. Renders an inline SVG sparkline of the lowest price per day across retailers.
 
 ## Filter
 
@@ -62,17 +73,27 @@ Args: `identifier, days=90, width=240, height=60`. Renders an inline SVG sparkli
 
 ## Global data
 
+`shopsavvyDeals` holds the 50 hottest deals (fetched once per build). Each deal has `title`, `url`, `pricing.current`, `pricing.original`, `pricing.currency`, `retailer.name`, `image.url`, and `grade`.
+
+```njk
+{# Nunjucks #}
+{% for deal in shopsavvyDeals.slice(0, 5) %}
+  <li>{{ deal.title }} — ${{ deal.pricing.current }} at {{ deal.retailer.name }}</li>
+{% endfor %}
+```
+
 ```liquid
-{% for deal in shopsavvyDeals | slice(0, 5) %}
-  <li>{{ deal.name }} — ${{ deal.price }} at {{ deal.retailer }}</li>
+{% comment %} Liquid {% endcomment %}
+{% for deal in shopsavvyDeals limit: 5 %}
+  <li>{{ deal.title }} — ${{ deal.pricing.current }} at {{ deal.retailer.name }}</li>
 {% endfor %}
 ```
 
 ## Run the example
 
 ```bash
-SHOPSAVVY_API_KEY=ss_live_… bun install && bun run build
-cd examples/basic && npx @11ty/eleventy
+bun install && bun run build
+cd examples/basic && SHOPSAVVY_API_KEY=ss_live_… npx @11ty/eleventy
 ```
 
 ## Test

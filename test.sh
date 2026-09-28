@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+if [ ! -f package.json ] || ! grep -q '"name": "eleventy-plugin-shopsavvy"' package.json; then
+  echo "WARNING: run test.sh from the eleventy-plugin-shopsavvy directory"
+  exit 1
+fi
+
 REQUIRED=(
   src/index.ts
   package.json
@@ -30,6 +35,8 @@ if command -v bun >/dev/null 2>&1; then
     exit 1
   fi
   echo "  ESM + CJS dist artifacts present"
+  echo "==> tests (real Eleventy build of examples/basic against a local API stand-in)"
+  bun test tests
 else
   echo "==> bun not installed; skipping build smoke test"
 fi
